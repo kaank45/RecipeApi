@@ -9,6 +9,9 @@ import com.example.recipeapi.strategy.SearchByCategory;
 import com.example.recipeapi.strategy.SearchByDescription;
 import com.example.recipeapi.strategy.SearchByName;
 import com.example.recipeapi.strategy.SearchStrategy;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -64,7 +67,18 @@ public class RecipeController {
     }
 
     @PostMapping
-    public Recipe createRecipe(@RequestBody Recipe recipe) {
-        return recipeRepository.save(recipe);
-    }
+    public ResponseEntity addRecipe(@RequestBody Recipe recipe) {
+    	  if (recipe.getName() == null || recipe.getName().trim().isEmpty() ||
+                  recipe.getCategory() == null || recipe.getCategory().trim().isEmpty() ||
+                  recipe.getDescription() == null || recipe.getDescription().trim().isEmpty()) {
+              return ResponseEntity.badRequest().body("Name, category, and description fields cannot be null or empty.");
+          }
+
+          if (recipeRepository.findByName(recipe.getName()) != null) {
+              return ResponseEntity.status(HttpStatus.CONFLICT).body("A recipe with the same name already exists.");
+          }
+
+          Recipe savedRecipe = recipeRepository.save(recipe);
+          return ResponseEntity.status(HttpStatus.CREATED).body(savedRecipe + "\n Recipe added successfully.");
+      }
 }
